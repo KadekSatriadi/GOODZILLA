@@ -22,9 +22,17 @@ public class Meteor : MonoBehaviour
         body.AddTorque(rotation);
     }
 
+    public void OnTriggerEnter(Collider other)
+    {
+        //if (other.gameObject.tag == "PlayerCollider")
+        //{
+            StartCoroutine(Explode(0f));
+        //}
+    }
+
     public void OnCollisionEnter(Collision collision)
     {
-        var damage = collision.impulse * transform.localScale.x * 5000;
+        var damage = collision.impulse * transform.localScale.x * 10000f;
 
         switch (collision.gameObject.tag)
         {
@@ -42,8 +50,6 @@ public class Meteor : MonoBehaviour
                 break;
 
             case "PlayerCollider":
-                body.mass = 0;
-                StartCoroutine(Explode(2f));
                 break;
 
             default:

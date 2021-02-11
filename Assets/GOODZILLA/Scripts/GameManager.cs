@@ -50,7 +50,7 @@ public class GameManager : MonoBehaviour
             else
             {
                 Debug.Log("Remaining time " + (stopTime - currentTime).TotalSeconds + " s");
-                timeText.text = "Remaining time " + (stopTime - currentTime).TotalSeconds + " s";
+                timeText.text = "";// "Remaining time " + (stopTime - currentTime).TotalSeconds + " s";
             }
 
         }
@@ -69,7 +69,7 @@ public class GameManager : MonoBehaviour
             else
             {
                 currentDamage += damage;
-                damageText.text = "Damage $" + currentDamage + " / $" + maxAllowedDamage;
+                damageText.text = "";// "Damage $" + currentDamage + " / $" + maxAllowedDamage;
             }
         }
 
