@@ -14,6 +14,8 @@ public class MeteorSpawner : MonoBehaviour
     public float meteorSizeMin = 0.1f;
     public float meteorSizeMax = 0.3f;
 
+    public AudioSource audioSource;
+
     public GameObject meteorPrefab;
     private bool isPlaying = false;
 
@@ -58,6 +60,9 @@ public class MeteorSpawner : MonoBehaviour
 
             //rescale meteor
             g.transform.localScale = Vector3.one * Random.Range(meteorSizeMin, meteorSizeMax);
+
+            //play audio
+            audioSource.Play();
         }
     }
 

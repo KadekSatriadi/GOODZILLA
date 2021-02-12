@@ -60,6 +60,8 @@ public class GameManager : MonoBehaviour
 
     public void AddDamage(float damage)
     {
+        Debug.Log(damage);
+
         if (isPlaying)
         {
             if (currentDamage + damage > maxAllowedDamage)

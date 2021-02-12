@@ -5,7 +5,10 @@ using UnityEngine;
 public class Meteor : MonoBehaviour
 {
     public float damage;
-    public GameObject particleSystemPrefab;
+    public ParticleSystem meteorTrailParticles;
+    public GameObject explosionParticleSystemPrefab;
+    public AudioSource meteorBurning;
+    public AudioSource meteorExplosion;
 
     private float selfDestroyTime = 10f;
     private Rigidbody body;
@@ -15,7 +18,7 @@ public class Meteor : MonoBehaviour
         gameManager = FindObjectOfType<GameManager>();
         body = GetComponent<Rigidbody>();
     }
-    
+
     public void Go(Vector3 force, Vector3 rotation)
     {
         body.AddForce(force);
@@ -32,29 +35,26 @@ public class Meteor : MonoBehaviour
 
     public void OnCollisionEnter(Collision collision)
     {
-        var damage = collision.impulse * transform.localScale.x * 10000f;
+        var force = collision.impulse / Time.fixedDeltaTime * transform.localScale.x * 100;
+        var damage = Mathf.Max(force.magnitude, 20);
 
         switch (collision.gameObject.tag)
         {
             case "Building":
                 var building = collision.gameObject.GetComponent<Building>();
-                building.DealDamage(damage);
+                Vector3 collisionDirection = (collision.contacts[0].point - transform.position).normalized;
+                building.DealDamage(collisionDirection, damage);
                 StartCoroutine(Explode());
-                gameManager.AddDamage(damage.magnitude);
-                
                 break;
 
             case "Floor":
                 StartCoroutine(Explode());
-                gameManager.AddDamage(damage.magnitude);
+                gameManager.AddDamage(damage);
                 break;
 
             case "PlayerCollider":
-                break;
-
             default:
-                StartCoroutine(Explode(2f));
-                body.useGravity = true;
+                StartCoroutine(Explode(0));
                 break;
         }
 
@@ -65,12 +65,20 @@ public class Meteor : MonoBehaviour
         yield return new WaitForSeconds(delay);
 
         // Play particle effects
-        var particles = Instantiate(particleSystemPrefab).GetComponent<ParticleSystem>();
+        var particles = Instantiate(explosionParticleSystemPrefab).GetComponent<ParticleSystem>();
         particles.transform.position = transform.position;
         particles.Play();
         Destroy(particles.gameObject, 2f);
 
-        // Destroy this meteor
-        Destroy(gameObject);
+        // Play explosion sound effect
+        meteorBurning.Stop();
+        meteorExplosion.Play();
+
+        // Destroy this meteor on a delay so that the sound effect can play
+        gameObject.GetComponent<Renderer>().enabled = false;
+        gameObject.GetComponent<Collider>().enabled = false;
+        body.isKinematic = true;
+        meteorTrailParticles.Stop();
+        Destroy(gameObject, 4f);
     }
 }

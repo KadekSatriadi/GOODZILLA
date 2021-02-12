@@ -6,6 +6,10 @@ using UnityEngine;
 public class Building : MonoBehaviour
 {
     public float HitPoints = 100;
+    public AudioSource buildingDamaged;
+    public AudioSource buildingFalling;
+    public AudioSource buildingExplosion;
+    public GameObject sparkParticlePrefab;
 
     private Rigidbody rigidbody;
     private GameManager gameManager;
@@ -24,27 +28,35 @@ public class Building : MonoBehaviour
     {
         if (other.gameObject.tag == "PlayerHands")
         {
-            DealDamage(Vector3.one * 10);
+            // Get closest point to hands
+            Vector3 closestPoint = GetComponent<BoxCollider>().ClosestPoint(other.transform.position);
+            // Get direction vector
+            Vector3 direction = (transform.position - closestPoint).normalized;
+
+            DealDamage(direction, 10);
             gameManager.AddDamage(10);
+
+            var sparks = Instantiate(sparkParticlePrefab) as GameObject;
+            sparks.transform.position = closestPoint;
+            sparks.GetComponent<ParticleSystem>().Play();
+            Destroy(sparks, 2f);
         }
     }
 
-    public void DealDamage(Vector3 force)
+    public void DealDamage(Vector3 collisionDirection, float damage)
     {
-        var damageTaken = Mathf.Max(force.magnitude, 35);
-        Debug.Log(damageTaken);
-        HitPoints -= (damageTaken);
+        HitPoints -= (damage);
+        gameManager.AddDamage(damage);
 
         if (HitPoints <= 0)
         {
-            DestroyBuilding(force * 2);
+            DestroyBuilding(collisionDirection, damage);
         }
         else
         {
-            StartCoroutine(ShakeBuilding(0.05f, force.magnitude * 40, 0.75f));
+            buildingDamaged.Play();
+            StartCoroutine(ShakeBuilding(0.05f, damage, 0.75f));
         }
-
-        //BuildingDamageManager.Instance.AddDamageDone(force.magnitude);
     }
 
     public IEnumerator ShakeBuilding(float amount, float speed, float duration)
@@ -74,11 +86,12 @@ public class Building : MonoBehaviour
         transform.position = originalPos;
     }
 
-    public void DestroyBuilding(Vector3 force)
+    public void DestroyBuilding(Vector3 force, float damage)
     {
         GetComponent<Collider>().isTrigger = false;
         rigidbody.constraints = RigidbodyConstraints.None;
-        rigidbody.AddForce(force);
+        rigidbody.AddForce(force * damage * 1.5f);
+        buildingFalling.Play();
         Invoke("Explode", 2f);
     }
 
@@ -119,6 +132,10 @@ public class Building : MonoBehaviour
             }
         }
 
-        Destroy(gameObject);
+        buildingExplosion.Play();
+        gameObject.GetComponent<Renderer>().enabled = false;
+        gameObject.GetComponent<Collider>().enabled = false;
+        rigidbody.isKinematic = true;
+        Destroy(gameObject, 4f);
     }
 }
